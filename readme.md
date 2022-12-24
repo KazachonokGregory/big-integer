@@ -33,7 +33,7 @@
 
 Впишите сюда ссылку на посылку в яндекс-контесте, которая получила статус AC.
 
-Посылка: https://contest.yandex.ru/contest/41270/run-report/79480046/
+Посылка: https://contest.yandex.ru/contest/41270/run-report/79973272/
 
 
 
