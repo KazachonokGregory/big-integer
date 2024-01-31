@@ -2,32 +2,41 @@
 
 #include "biginteger.h"
 
+/*
+ * A class that implements arithmetic for arbitrary rational numbers.
+ */
 class Rational {
-    public:
-        Rational();
-        Rational(int64_t);
-        Rational(const BigInteger&);
-        Rational(const BigInteger&, const BigInteger&);
-        Rational(const Rational&) = default;
-        ~Rational() = default;
+public:
+    // constructor by default: sets to 0
+    Rational();
+    // constructor from a 64-bit integer
+    Rational(int64_t);
+    // constructor from a BigInteger
+    Rational(const BigInteger&);
+    // constructor from numerator and denominator
+    Rational(const BigInteger&, const BigInteger&);
+    Rational(const Rational&) = default;
+    ~Rational() = default;
 
-        BigInteger::Sign& sign();
-        BigInteger::Sign sign() const;
+    BigInteger::Sign& sign();
+    BigInteger::Sign sign() const;
 
-        void change_sign();
-        bool operator ==(const Rational&) const = default;
-        std::strong_ordering operator <=>(const Rational&) const;
-        Rational& operator =(const Rational&) = default;
-        string toString() const;
-        string asDecimal(size_t) const;
-        Rational& operator +=(const Rational&);
-        Rational& operator *=(const Rational&);
-        Rational& operator -=(const Rational&);
-        Rational& operator /=(const Rational&);
-        explicit operator double() const;
-    private:
-        BigInteger m_numerator, m_denominator;
-        void simplify();
+    void change_sign();
+    bool operator ==(const Rational&) const = default;
+    std::strong_ordering operator <=>(const Rational&) const;
+    Rational& operator =(const Rational&) = default;
+    string toString() const;
+    // display as a decimal number with given precision
+    string asDecimal(size_t) const;
+    Rational& operator +=(const Rational&);
+    Rational& operator *=(const Rational&);
+    Rational& operator -=(const Rational&);
+    Rational& operator /=(const Rational&);
+    explicit operator double() const;
+private:
+    BigInteger m_numerator, m_denominator;
+    // divide by the greatest common factor
+    void simplify();
 };
 
 void Rational::simplify() {
@@ -58,7 +67,7 @@ Rational::Rational(const BigInteger& number):
 Rational::Rational(const BigInteger& first, const BigInteger& second):
     m_numerator(first), m_denominator(second)
 {
-    assert(m_denominator.sign() != BigInteger::Sign::ZERO);
+    assert(m_denominator.sign() != BigInteger::Sign::ZERO && "Error: can't divide by 0!");
     simplify();
 }
 
@@ -157,6 +166,7 @@ Rational operator /(Rational lhs, const Rational& rhs) {
     return copy;
 }
 
+// convert rational to double
 Rational::operator double() const {
     const size_t double_precision = 30;
     string s = asDecimal(double_precision);

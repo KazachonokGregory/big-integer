@@ -14,16 +14,21 @@
 using std::vector;
 using std::string;
 
+/*
+ * A class that implements arithmetic for arbitrarily large integer numbers.
+ */
 class BigInteger {
 public:
     enum class Sign;
 
     static const int S_TEN = 10;
 
+    // constructor by default: sets to 0
     BigInteger();
+    // constructor from a 64-bit integer
     BigInteger(int64_t);
+    // constructor from a string (if the string isn't a valid number, behavior is undefined)
     explicit BigInteger(const string&);
-    BigInteger(const vector<int64_t>&, BigInteger::Sign);
     BigInteger(const BigInteger&) = default;
     ~BigInteger() = default;
 
@@ -31,10 +36,12 @@ public:
     BigInteger& operator =(const BigInteger&) = default;
     BigInteger::Sign sign() const;
     BigInteger::Sign& sign();
+    // converts to bool like regular int
     explicit operator bool() const;
     string toString() const;
     BigInteger& operator +=(const BigInteger&);
     BigInteger& operator -=(const BigInteger&);
+    // switches the sign to the opposite
     void change_sign();
     BigInteger operator *(const BigInteger&) const;
     BigInteger& operator *=(const BigInteger&);
@@ -45,28 +52,42 @@ public:
     BigInteger& operator %=(int64_t);
     int64_t operator %(int64_t) const;
 
+    // compares the absolute value with the other
     std::strong_ordering abs_compare(const BigInteger&) const;
+
+    // the number of digits
+    size_t size() const;
 
 private:
     typedef std::complex<long double> cld;
-    static const int64_t S_MAGIC_CONSTANT = 400; // regulates for what sizes of data we will use FFT for multiplication
+    // for numbers with more digits than S_MAGIC_CONSTANT, FFT is used for multiplication
+    static const int64_t S_MAGIC_CONSTANT = 400; 
     static constexpr long double S_PI = std::numbers::pi_v<long double>;
 
     vector<int64_t> m_digits;
     BigInteger::Sign m_sign;
 
+    // constructor from a vector of digits between 0 and S_BASE - 1
+    BigInteger(const vector<int64_t>&, BigInteger::Sign);
+
     static BigInteger::Sign sign(int64_t);
+    // divides and rounds up
     static size_t ceil_division(size_t, size_t);
     static size_t reverse_bits(size_t, size_t);
+    // the Fast Fourier Transform (https://en.wikipedia.org/wiki/Fast_Fourier_transform)
     static void fft(size_t, cld*, cld);
     static vector<int64_t> multiply_polynomials(const vector<int64_t>&, const vector<int64_t>&);
 
+    // use FFT for multiplication
     BigInteger fft_multiply(const BigInteger&) const;
+    // use the simple algorithm for multiplication
     BigInteger quadratic_multiply(const BigInteger&) const;
+    // divide and return both the quotient and the remainder
     std::pair<BigInteger, BigInteger> div(const BigInteger&) const;
-    size_t size() const;
+    // BigInteger is stored in base S_BASE
     static const int64_t S_BASE = 10000;
-    static const size_t S_BASE_LENGTH = 4; // the base is a power of 10
+    // S_BASE is 10 to the power S_BASE_LENGTH
+    static const size_t S_BASE_LENGTH = 4; 
 };
 
 enum class BigInteger::Sign {
@@ -137,7 +158,8 @@ BigInteger::BigInteger(const string& s) {
     size_t new_size = ceil_division(s.size() - start, S_BASE_LENGTH);
     m_digits.resize(new_size);
     for (size_t i = s.size(); i > start; --i) {
-        m_digits[(i - start - 1) / S_BASE_LENGTH] = m_digits[(i - start - 1) / S_BASE_LENGTH] * BigInteger::S_TEN + s[s.size() + start - i] - '0';
+        m_digits[(i - start - 1) / S_BASE_LENGTH] = m_digits[(i - start - 1) / S_BASE_LENGTH] 
+            * BigInteger::S_TEN + s[s.size() + start - i] - '0';
     }
 }
 
@@ -239,13 +261,13 @@ BigInteger& BigInteger::operator +=(const BigInteger& other) {
         if (i >= size()) {
             m_digits.push_back(0);
         }
-        int64_t add = (i < other.size() ? other.m_digits[i]:0);
+        int64_t add = (i < other.size() ? other.m_digits[i] : 0);
         m_digits[i] += add * different_signs;
         m_digits[i] = m_digits[i] * need_change_sign;
         m_digits[i] += carry * different_signs;
         carry = (m_digits[i] >= S_BASE || m_digits[i] < 0);
         if (carry) {
-            m_digits[i] += S_BASE * different_signs * (-1);
+            m_digits[i] -= S_BASE * different_signs;
         }
     }
     while(m_digits.size() > 1 && m_digits.back() == 0) {
@@ -303,7 +325,7 @@ void BigInteger::fft(size_t n, cld* a, cld q) {
         ++logn;
     }
 
-    cld* q_powers = new cld[logn];
+    vector<cld> q_powers(logn);
     q_powers[0] = q;
     for (size_t i = 1; i < logn; ++i) {
         q_powers[i] = q_powers[i-1] * q_powers[i-1];
@@ -331,8 +353,6 @@ void BigInteger::fft(size_t n, cld* a, cld q) {
             }
         }
     }
-
-    delete[] q_powers;
 }
 
 vector<int64_t> BigInteger::multiply_polynomials(const vector<int64_t>& A, const vector<int64_t>& B) {
@@ -395,7 +415,7 @@ BigInteger BigInteger::quadratic_multiply(const BigInteger& other) const {
         for (size_t j = 0; j < other.size() || carry; ++j) {
             int64_t current = result.m_digits[i+j] + (j < other.size() ? m_digits[i] * other.m_digits[j] : 0ll) + carry;
             carry = current / S_BASE;
-            result.m_digits[i+j] = current - carry * S_BASE;
+            result.m_digits[i + j] = current - carry * S_BASE;
         }
     }
 
@@ -455,16 +475,17 @@ BigInteger operator *(const BigInteger& lhs, int64_t rhs) {
     return copy;
 }
 
+// integer literal that indicates BigInteger
 BigInteger operator ""_bi(unsigned long long x) {
     return BigInteger(static_cast<int64_t>(x));
 }
 
+// string literal that indicates BigInteger
 BigInteger operator ""_bi(const char* x, size_t) {
     return BigInteger(x);
 }
 
 std::pair<BigInteger, BigInteger> BigInteger::div(const BigInteger& other) const {
-    // if *this = p * other + r, this function returns {p, r}
     assert(other != 0_bi);
     BigInteger result;
     size_t n = size(), m = other.size();
@@ -585,6 +606,7 @@ BigInteger& BigInteger::operator %=(int64_t number) {
     return *this;
 }
 
+// compute the greatest common divisor using binary Euclidean algorithm
 BigInteger gcd(BigInteger A, BigInteger B) {
     if (A == 0_bi) {
         return B;
