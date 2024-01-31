@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <vector>
 #include <string>
@@ -25,7 +27,7 @@ public:
     BigInteger(const BigInteger&) = default;
     ~BigInteger() = default;
 
-	bool operator ==(const BigInteger&) const;
+    bool operator ==(const BigInteger&) const;
     BigInteger& operator =(const BigInteger&) = default;
     BigInteger::Sign sign() const;
     BigInteger::Sign& sign();
@@ -41,14 +43,14 @@ public:
     BigInteger& operator /=(int64_t);
     BigInteger& operator %=(const BigInteger&);
     BigInteger& operator %=(int64_t);
-	int64_t operator %(int64_t) const;
+    int64_t operator %(int64_t) const;
 
     std::strong_ordering abs_compare(const BigInteger&) const;
 
 private:
     typedef std::complex<long double> cld;
     static const int64_t S_MAGIC_CONSTANT = 400; // regulates for what sizes of data we will use FFT for multiplication
-	static constexpr long double S_PI = std::numbers::pi_v<long double>;
+    static constexpr long double S_PI = std::numbers::pi_v<long double>;
 
     vector<int64_t> m_digits;
     BigInteger::Sign m_sign;
@@ -62,7 +64,7 @@ private:
     BigInteger fft_multiply(const BigInteger&) const;
     BigInteger quadratic_multiply(const BigInteger&) const;
     std::pair<BigInteger, BigInteger> div(const BigInteger&) const;
-	size_t size() const;
+    size_t size() const;
     static const int64_t S_BASE = 10000;
     static const size_t S_BASE_LENGTH = 4; // the base is a power of 10
 };
@@ -100,21 +102,21 @@ size_t BigInteger::ceil_division(size_t x, size_t y) {
 }
 
 BigInteger::BigInteger():
-m_digits(1, 0), m_sign(BigInteger::Sign::ZERO)
+    m_digits(1, 0), m_sign(BigInteger::Sign::ZERO)
 {}
 
 BigInteger::BigInteger(int64_t number):
-m_sign(sign(number)) {
-    number = number < 0 ? -number : number;
-    if (number == 0) {
-        m_digits = {0};
-        return;
+    m_sign(sign(number)) {
+        number = number < 0 ? -number : number;
+        if (number == 0) {
+            m_digits = {0};
+            return;
+        }
+        while (number > 0) {
+            m_digits.push_back(number % S_BASE);
+            number /= S_BASE;
+        }
     }
-    while (number > 0) {
-        m_digits.push_back(number % S_BASE);
-        number /= S_BASE;
-    }
-}
 
 BigInteger::BigInteger(const string& s) {
     if (s == "0" || s == "-0") {
@@ -123,14 +125,14 @@ BigInteger::BigInteger(const string& s) {
         return;
     }
 
-	size_t start = 0;
-	m_sign = BigInteger::Sign::POSITIVE;
+    size_t start = 0;
+    m_sign = BigInteger::Sign::POSITIVE;
     if (s[0] == '-') {
         m_sign = BigInteger::Sign::NEGATIVE;
         ++start;
     }
     while (s[start] == '0' && s.size() - start > 1) {
-		++start;
+        ++start;
     }
     size_t new_size = ceil_division(s.size() - start, S_BASE_LENGTH);
     m_digits.resize(new_size);
@@ -140,7 +142,7 @@ BigInteger::BigInteger(const string& s) {
 }
 
 BigInteger::BigInteger(const vector<int64_t>& m_digits, BigInteger::Sign sign):
-m_digits(m_digits), m_sign(sign)
+    m_digits(m_digits), m_sign(sign)
 {}
 
 size_t BigInteger::size() const {
@@ -166,10 +168,10 @@ std::strong_ordering operator <=>(const BigInteger& lhs, const BigInteger& rhs) 
     if (lhs.sign() != rhs.sign()) {
         return lhs.sign() <=> rhs.sign();
     }
-	std::strong_ordering order = lhs.abs_compare(rhs);
-	if (lhs.sign() == BigInteger::Sign::NEGATIVE) {
-		return 0 <=> order;
-	}    
+    std::strong_ordering order = lhs.abs_compare(rhs);
+    if (lhs.sign() == BigInteger::Sign::NEGATIVE) {
+        return 0 <=> order;
+    }    
     return order;
 }
 
@@ -181,7 +183,7 @@ std::istream& operator >>(std::istream& in, BigInteger& number) {
 }
 
 std::ostream& operator <<(std::ostream& out, BigInteger number) {
-	out << number.toString();
+    out << number.toString();
     return out;
 }
 
@@ -190,16 +192,16 @@ BigInteger::operator bool() const {
 }
 
 string BigInteger::toString() const {
-	std::stringstream ss;
-	if (sign() == BigInteger::Sign::NEGATIVE) {
+    std::stringstream ss;
+    if (sign() == BigInteger::Sign::NEGATIVE) {
         ss << '-';
     }
-	ss << m_digits.back();
+    ss << m_digits.back();
     for (size_t i = m_digits.size() - 1; i > 0; --i) {
         ss << std::setw(BigInteger::S_BASE_LENGTH) << std::setfill('0') << m_digits[i - 1];
     }    
-	string result;
-	ss >> result;
+    string result;
+    ss >> result;
     return result;
 }
 
@@ -213,7 +215,7 @@ void BigInteger::change_sign() {
 }
 
 BigInteger operator -(const BigInteger& number) {
-	BigInteger copy = number;
+    BigInteger copy = number;
     copy.change_sign();
     return copy;
 }
@@ -259,7 +261,7 @@ BigInteger& BigInteger::operator +=(const BigInteger& other) {
 }
 
 BigInteger abs(const BigInteger& number) {
-	BigInteger copy = number;
+    BigInteger copy = number;
     if(copy.sign() == BigInteger::Sign::NEGATIVE) {
         copy.change_sign();
     }
@@ -267,14 +269,14 @@ BigInteger abs(const BigInteger& number) {
 }
 
 BigInteger& BigInteger::operator -=(const BigInteger& other) {
-	change_sign();
+    change_sign();
     *this += other;
-	change_sign();
+    change_sign();
     return *this;
 }
 
 BigInteger operator +(const BigInteger& lhs, const BigInteger& rhs) {
-	BigInteger copy = lhs;
+    BigInteger copy = lhs;
     copy += rhs;
     return copy;
 }
@@ -340,9 +342,9 @@ vector<int64_t> BigInteger::multiply_polynomials(const vector<int64_t>& A, const
     }
     cld* a = new cld[n];
     cld* b = new cld[n];
-	std::copy(A.begin(), A.end(), a);
-	std::copy(B.begin(), B.end(), b);
-   
+    std::copy(A.begin(), A.end(), a);
+    std::copy(B.begin(), B.end(), b);
+
     cld q = {cosl(S_PI * 2 / n), sinl(S_PI * 2 / n)};
     fft(n, a, q);
     fft(n, b, q);
@@ -431,7 +433,7 @@ BigInteger& BigInteger::operator *=(int64_t number) {
         change_sign();
         number = -number;
     }
-    
+
     int64_t carry = 0;
     for (size_t i = 0; i < m_digits.size() || carry; ++i) {
         if (i >= m_digits.size()) {
@@ -448,7 +450,7 @@ BigInteger& BigInteger::operator *=(int64_t number) {
 }
 
 BigInteger operator *(const BigInteger& lhs, int64_t rhs) {
-	BigInteger copy = lhs;
+    BigInteger copy = lhs;
     copy *= rhs;
     return copy;
 }
@@ -616,174 +618,6 @@ BigInteger gcd(BigInteger A, BigInteger B) {
             B /= 2;
         }
     }
-}
-
-class Rational {
-public:
-    Rational();
-    Rational(int64_t);
-    Rational(const BigInteger&);
-    Rational(const BigInteger&, const BigInteger&);
-    Rational(const Rational&) = default;
-    ~Rational() = default;
-
-    BigInteger::Sign& sign();
-    BigInteger::Sign sign() const;
-
-	void change_sign();
-	bool operator ==(const Rational&) const = default;
-	std::strong_ordering operator <=>(const Rational&) const;
-    Rational& operator =(const Rational&) = default;
-    string toString() const;
-    string asDecimal(size_t) const;
-    Rational& operator +=(const Rational&);
-    Rational& operator *=(const Rational&);
-    Rational& operator -=(const Rational&);
-    Rational& operator /=(const Rational&);
-    explicit operator double() const;
-private:
-    BigInteger m_numerator, m_denominator;
-    void simplify();
-};
-
-void Rational::simplify() {
-    if (m_numerator.sign() == BigInteger::Sign::ZERO) {
-        m_denominator = 1;
-    }
-    if (m_denominator.sign() == BigInteger::Sign::NEGATIVE) {
-        m_denominator.change_sign();
-        m_numerator.change_sign();
-    }
-    BigInteger factor = gcd(abs(m_numerator), m_denominator);
-    m_numerator /= factor;
-    m_denominator /= factor;
-}
-
-Rational::Rational():
-m_numerator(0), m_denominator(1)
-{}
-
-Rational::Rational(int64_t number):
-m_numerator(number), m_denominator(1)
-{}
-
-Rational::Rational(const BigInteger& number):
-m_numerator(number), m_denominator(1)
-{}
-
-Rational::Rational(const BigInteger& first, const BigInteger& second):
-m_numerator(first), m_denominator(second)
-{
-    assert(m_denominator.sign() != BigInteger::Sign::ZERO);
-    simplify();
-}
-
-BigInteger::Sign& Rational::sign() {
-    return m_numerator.sign();
-}
-
-BigInteger::Sign Rational::sign() const {
-    return m_numerator.sign();
-}
-
-string Rational::toString() const {
-    if (m_denominator == 1_bi) {
-        return m_numerator.toString();
-    }
-    return m_numerator.toString() + "/" + m_denominator.toString();
-}
-
-string Rational::asDecimal(size_t precision = 0) const {
-    BigInteger number = m_numerator;
-    for (size_t i = 0; i < precision; ++i) {
-        number *= BigInteger::S_TEN;
-    }
-    number /= m_denominator;
-    string result = number.toString();
-    size_t first_digit = result[0] == '-' ? 1 : 0;
-    size_t leading_zeros = 0;
-    if (precision + first_digit + 1 >= result.size()) {
-        leading_zeros = precision + first_digit + 1 - result.size();
-    }
-    result.insert(first_digit, leading_zeros, '0');
-    if (precision) {
-        result.insert(result.size() - precision, 1, '.');
-    }
-
-    return result;
-}
-
-Rational& Rational::operator +=(const Rational& other) {
-    m_numerator = m_numerator * other.m_denominator + other.m_numerator * m_denominator;
-    m_denominator *= other.m_denominator;
-    simplify();
-    return *this;
-}
-
-Rational& Rational::operator *=(const Rational& other) {
-    m_numerator *= other.m_numerator;
-    m_denominator *= other.m_denominator;
-    simplify();
-    return *this;
-}
-
-void Rational::change_sign() {
-	m_numerator.change_sign();
-}
-
-Rational operator -(const Rational& number) {
-	Rational copy = number;
-    copy *= -1;
-    return copy;
-}
-
-Rational& Rational::operator -=(const Rational& other) {
-    *this += -other;
-    return *this;
-}
-
-Rational& Rational::operator /=(const Rational& other) {
-    m_numerator *= other.m_denominator;
-    m_denominator *= other.m_numerator;
-    simplify();
-    return *this;
-}
-
-Rational operator +(const Rational& lhs, const Rational& rhs) {
-	Rational copy = lhs;
-    copy += rhs;
-    return copy;
-}
-
-Rational operator -(Rational lhs, const Rational& rhs) {
-	Rational copy = lhs;
-    copy -= rhs;
-    return copy;
-}
-
-Rational operator *(Rational lhs, const Rational& rhs) {
-    Rational copy = lhs;
-    copy *= rhs;
-    return copy;
-}
-
-Rational operator /(Rational lhs, const Rational& rhs) {
-    Rational copy = lhs;
-    copy /= rhs;
-    return copy;
-}
-
-Rational::operator double() const {
-    const size_t double_precision = 30;
-    string s = asDecimal(double_precision);
-    return stod(s);
-}
-
-std::strong_ordering Rational::operator <=>(const Rational& other) const {
-    if (sign() != other.sign()) {
-        return sign() <=> other.sign();
-    }
-    return m_numerator * other.m_denominator <=> other.m_numerator * m_denominator;
 }
 
 //

@@ -6,6 +6,7 @@
 #include <limits>
 #include "tiny_test.hpp"
 #include "biginteger.h"
+#include "rational.h"
 
 using testing::make_pretty_test;
 using testing::TestGroup;
